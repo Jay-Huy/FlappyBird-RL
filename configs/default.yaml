@@ -33,7 +33,7 @@ ppo:
   max_grad_norm: 0.5
 
 grpo:
-  group_size: 4
+  group_size: 16
   max_steps: 128            # max frames per training episode
   clip_eps: 0.2
   epochs: 4

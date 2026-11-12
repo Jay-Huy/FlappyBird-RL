@@ -203,7 +203,7 @@ def run_single_episode(model, max_steps=128):
             {"score": score, "length": len(ep_actions), "return": total_reward})
 
 
-def train_grpo_iteration(model, optimizer, group_size=4, max_steps=128, clip_eps=0.2,
+def train_grpo_iteration(model, optimizer, group_size=16, max_steps=128, clip_eps=0.2,
                          grpo_epochs=4, batch_size=32, c_ent=0.01, max_grad_norm=0.5):
     """One full GRPO iteration. Returns (metrics, finished_episodes)."""
     device = next(model.parameters()).device

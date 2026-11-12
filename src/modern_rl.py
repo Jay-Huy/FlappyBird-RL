@@ -3,6 +3,8 @@ Modern RL Architectures for Flappy Bird:
 - ActorCriticNetwork: Used by PPO (Dual heads: Policy/Actor and Value/Critic)
 - ActorOnlyNetwork: Used by GRPO (Single head: Policy/Actor only, no Critic)
 """
+import math
+
 import torch
 import torch.nn as nn
 from torch.distributions.categorical import Categorical
@@ -38,15 +40,22 @@ class ActorCriticNetwork(nn.Module):
             if isinstance(m, (nn.Conv2d, nn.Linear)):
                 nn.init.orthogonal_(m.weight, gain=nn.init.calculate_gain('relu'))
                 nn.init.constant_(m.bias, 0.0)
+        # Actor head: small weights + bias so that P(flap) ~= 0.1 in every state at init
+        nn.init.orthogonal_(self.actor_head.weight, gain=0.01)
+        with torch.no_grad():
+            self.actor_head.bias.copy_(torch.tensor([0.0, math.log(0.1 / 0.9)]))
+        # Critic head: gain 1
+        nn.init.orthogonal_(self.critic_head.weight, gain=1.0)
 
     def forward(self, state):
         """
         Args:
-            state: Tensor with shape [Batch_Size, 4, 84, 84]
+            state: Tensor with shape [Batch_Size, 4, 84, 84] (pixel values 0/255 from pre_processing)
         Returns:
             action_logits: Tensor [Batch_Size, 2]
             state_value: Tensor [Batch_Size, 1]
         """
+        state = state / 255.0  # pre_processing outputs 0/255 -> scale to 0/1
         features = self.conv1(state)
         features = self.conv2(features)
         features = self.conv3(features)
@@ -96,14 +105,19 @@ class ActorOnlyNetwork(nn.Module):
             if isinstance(m, (nn.Conv2d, nn.Linear)):
                 nn.init.orthogonal_(m.weight, gain=nn.init.calculate_gain('relu'))
                 nn.init.constant_(m.bias, 0.0)
+        # Actor head: small weights + bias so that P(flap) ~= 0.1 in every state at init
+        nn.init.orthogonal_(self.actor_head.weight, gain=0.01)
+        with torch.no_grad():
+            self.actor_head.bias.copy_(torch.tensor([0.0, math.log(0.1 / 0.9)]))
 
     def forward(self, state):
         """
         Args:
-            state: Tensor with shape [Batch_Size, 4, 84, 84]
+            state: Tensor with shape [Batch_Size, 4, 84, 84] (pixel values 0/255 from pre_processing)
         Returns:
             action_logits: Tensor [Batch_Size, 2]
         """
+        state = state / 255.0  # pre_processing outputs 0/255 -> scale to 0/1
         features = self.conv1(state)
         features = self.conv2(features)
         features = self.conv3(features)
