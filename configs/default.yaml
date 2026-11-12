@@ -1,0 +1,42 @@
+# Default config for train.py (PPO and GRPO).
+# Override any key from the command line, e.g.:
+#   python train.py --algo ppo --config configs/default.yaml --set train.max_iters=50 device=cuda:0
+
+seed: 123
+device: cuda:0
+out_dir: results            # checkpoints go to {out_dir}/{run_name}/
+
+wandb:
+  project: FlappyBird-RL
+  mode: online              # online | offline | disabled
+  run_name: null            # null -> "{algo}-{timestamp}"
+
+train:
+  max_iters: 10000
+  lr: 1.0e-4
+  eval_every: 50            # iterations between eval rounds (also eval at the last iteration)
+  save_every: 500           # iterations between checkpoints (also saved at the end)
+
+eval:
+  episodes: 5
+  max_steps: 10000          # cap per eval episode -> eval/cap_rate
+
+ppo:
+  num_steps: 128            # rollout length per iteration
+  gamma: 0.99
+  gae_lambda: 0.95
+  clip_eps: 0.2
+  epochs: 4
+  batch_size: 32
+  c_val: 0.5
+  c_ent: 0.01
+  max_grad_norm: 0.5
+
+grpo:
+  group_size: 4
+  max_steps: 128            # max frames per training episode
+  clip_eps: 0.2
+  epochs: 4
+  batch_size: 32
+  c_ent: 0.01
+  max_grad_norm: 0.5
