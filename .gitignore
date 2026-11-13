@@ -1,0 +1,9 @@
+# Training outputs
+results/
+wandb/
+*.log
+*.out
+
+# Python cache
+__pycache__/
+*.pyc

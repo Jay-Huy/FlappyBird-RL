@@ -210,13 +210,19 @@ def train_grpo_iteration(model, optimizer, group_size=16, max_steps=128, clip_ep
     model.train()
 
     # PHASE 1: GROUP ROLLOUT
+    # Same "question" for the whole group: every episode sees the same pipe sequence
+    # (pipes come from np.random; actions are still sampled from the policy via torch RNG).
+    group_seed = np.random.randint(2**31 - 1)
+    rng_state = np.random.get_state()
     group_trajectories, group_rewards, finished_episodes = [], [], []
     for _ in range(group_size):
+        np.random.seed(group_seed)
         states, actions, log_probs, ep_reward, ep_stats = run_single_episode(model, max_steps=max_steps)
         group_trajectories.append({"states": states, "actions": actions,
                                    "old_log_probs": log_probs, "reward": ep_reward})
         group_rewards.append(ep_reward)
         finished_episodes.append(ep_stats)
+    np.random.set_state(rng_state)  # continue the global RNG (minibatch shuffle, next group seed)
 
     # PHASE 2: GROUP ADVANTAGE  A_i = (R_i - mu) / sigma
     r_tensor = torch.tensor(group_rewards, dtype=torch.float32, device=device)
